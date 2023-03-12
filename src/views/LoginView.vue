@@ -49,11 +49,11 @@ export default {
     signIn () {
       const api = `${process.env.VUE_APP_API}admin/signin`
       this.axios.post(api, this.user).then(res => {
-        const { token, expired } = res.data
-        // console.log(new Date(expired))
-        document.cookie = `HexToken=${token}`
-        document.cookie = `expired=${new Date(expired)}`
-        console.log(document.cookie)
+        if (res.data.success) {
+          const { token, expired } = res.data
+          document.cookie = `hexToken=${token};expires=${new Date(expired)}`
+          this.$router.push('/dashboard/products')
+        }
       })
     }
   }
