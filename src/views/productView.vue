@@ -1,4 +1,10 @@
 <template>
+  <loading-component :active="isLoading"></loading-component>
+  <div class="text-end">
+    <button class="btn btn-primary" type="button" @click="openModal(true)">
+      增加一個產品
+    </button>
+  </div>
   <table class="table mt-4">
     <thead>
     <tr>
@@ -26,29 +32,78 @@
       </td>
       <td>
         <div class="btn-group">
-          <button class="btn btn-outline-primary btn-sm">編輯</button>
-          <button class="btn btn-outline-danger btn-sm">刪除</button>
+          <button class="btn btn-outline-primary btn-sm" @click="openModal(false,item)">編輯</button>
+          <button class="btn btn-outline-danger btn-sm" @click="deleteModal(item)">刪除</button>
         </div>
       </td>
     </tr>
     </tbody>
   </table>
+  <delete-modal ref="deleteModal" :product="tempProduct" @delete-product="deleteProduct"></delete-modal>
+  <ProductModal ref="productModal" :product="tempProduct" @update-product="updateProduct"></ProductModal>
 </template>
 
 <script>
+import ProductModal from '../components/ProductModal.vue'
+import DeleteModal from '@/components/DeleteModal.vue'
+
 export default {
   data () {
     return {
       products: [],
-      pagination: {}
+      pagination: {},
+      tempProduct: {},
+      isNew: false,
+      isLoading: false
     }
   },
+  components: {
+    DeleteModal,
+    ProductModal
+  },
   methods: {
+    deleteModal (item) {
+      this.$refs.deleteModal.showModal()
+      this.tempProduct = item
+    },
+    openModal (isNew, item) {
+      if (isNew) {
+        this.tempProduct = {}
+      } else {
+        this.tempProduct = { ...item }
+      }
+      this.isNew = isNew
+      this.$refs.productModal.showModal()
+    },
     getProducts () {
       const api = `${process.env.VUE_APP_API}api/${process.env.VUE_APP_PATH}/admin/products`
+      this.isLoading = true
       this.axios.get(api).then(res => {
+        this.isLoading = false
         this.products = res.data.products
         this.pagination = res.data.pagination
+      })
+    },
+    updateProduct (item) {
+      this.tempProduct = item
+      this.isLoading = true
+      let api = `${process.env.VUE_APP_API}api/${process.env.VUE_APP_PATH}/admin/product`
+      let httpMethods = 'post'
+      if (!this.isNew) {
+        api = `${process.env.VUE_APP_API}api/${process.env.VUE_APP_PATH}/admin/product/${item.id}`
+        httpMethods = 'put'
+      }
+      this.axios[httpMethods](api, { data: this.tempProduct }).then(res => {
+        this.$refs.productModal.hideModal()
+        this.getProducts()
+      })
+    },
+    deleteProduct (item) {
+      const api = `${process.env.VUE_APP_API}api/${process.env.VUE_APP_PATH}/admin/product/${item.id}`
+      this.isLoading = true
+      this.axios.delete(api).then(res => {
+        this.$refs.deleteModal.hideModal()
+        this.getProducts()
       })
     }
   },
