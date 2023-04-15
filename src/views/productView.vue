@@ -21,10 +21,10 @@
       <td>{{ item.category }}</td>
       <td>{{ item.title }}</td>
       <td class="text-right">
-        {{ item.origin_price }}
+        {{ $filters.currency(item.origin_price) }}
       </td>
       <td class="text-right">
-        {{ item.price }}
+        {{ $filters.currency(item.price) }}
       </td>
       <td>
         <span class="text-success" v-if="item.is_enabled">啟用</span>
@@ -41,11 +41,13 @@
   </table>
   <delete-modal ref="deleteModal" :product="tempProduct" @delete-product="deleteProduct"></delete-modal>
   <ProductModal ref="productModal" :product="tempProduct" @update-product="updateProduct"></ProductModal>
+  <PaginationComponent :pages="pagination" @emit-pages="getProducts"/>
 </template>
 
 <script>
 import ProductModal from '../components/ProductModal.vue'
 import DeleteModal from '@/components/DeleteModal.vue'
+import PaginationComponent from '@/components/PaginationComponent.vue'
 
 export default {
   data () {
@@ -58,9 +60,11 @@ export default {
     }
   },
   components: {
+    PaginationComponent,
     DeleteModal,
     ProductModal
   },
+  inject: ['emitter'],
   methods: {
     deleteModal (item) {
       this.$refs.deleteModal.showModal()
@@ -75,10 +79,11 @@ export default {
       this.isNew = isNew
       this.$refs.productModal.showModal()
     },
-    getProducts () {
-      const api = `${process.env.VUE_APP_API}api/${process.env.VUE_APP_PATH}/admin/products`
+    getProducts (page = 1) {
+      const api = `${process.env.VUE_APP_API}api/${process.env.VUE_APP_PATH}/admin/products?page=${page}`
       this.isLoading = true
       this.axios.get(api).then(res => {
+        console.log(res)
         this.isLoading = false
         this.products = res.data.products
         this.pagination = res.data.pagination
@@ -95,7 +100,20 @@ export default {
       }
       this.axios[httpMethods](api, { data: this.tempProduct }).then(res => {
         this.$refs.productModal.hideModal()
-        this.getProducts()
+        this.isLoading = false
+        if (res.data.success) {
+          this.getProducts()
+          this.emitter.emit('push-message', {
+            style: 'success',
+            title: '更新成功'
+          })
+        } else {
+          this.emitter.emit('push-message', {
+            style: 'danger',
+            title: '更新失敗',
+            content: res.data.message.join('、')
+          })
+        }
       })
     },
     deleteProduct (item) {
