@@ -5,10 +5,10 @@ import Loading from 'vue-loading-overlay'
 import 'vue-loading-overlay/dist/css/index.css'
 import App from './App.vue'
 import router from './router'
-import { currency } from './methods/filters'
+import { currency, date } from './methods/filters'
 
 const app = createApp(App)
-app.config.globalProperties.$filters = { currency }
+app.config.globalProperties.$filters = { currency, date }
 app.use(vueAxios, axios)
 app.component('loadingComponent', Loading)
 app.use(router)

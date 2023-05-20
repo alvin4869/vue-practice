@@ -1,4 +1,5 @@
 <template>
+  <loading-component :active="isLoading"></loading-component>
   <table class="table mt-4">
     <thead>
     <tr>
@@ -39,7 +40,7 @@
         <td>
           <div class="btn-group">
             <button class="btn btn-outline-primary btn-sm"
-                    @click="openModal(false, item)">檢視
+                    @click="openModal(item)">檢視
             </button>
             <button class="btn btn-outline-danger btn-sm"
                     @click="openDelOrderModal(item)"
@@ -50,15 +51,36 @@
       </tr>
     </template>
     </tbody>
+    <OrderModal :tempOrder="tempOrder"/>
   </table>
 </template>
 
 <script>
+import OrderModal from '@/components/OrderModal.vue'
+
 export default {
+  components: { OrderModal },
   data () {
     return {
-      orders: {}
+      orders: {},
+      tempOrder: {},
+      isLoading: false
     }
+  },
+  methods: {
+    getOrder () {
+      this.isLoading = true
+      const api = `${process.env.VUE_APP_API}api/${process.env.VUE_APP_PATH}/admin/orders`
+      this.axios.get(api).then(res => {
+        this.isLoading = false
+      })
+    },
+    openModal (item) {
+      this.tempOrder = item
+    }
+  },
+  created () {
+    this.getOrder()
   }
 }
 </script>
